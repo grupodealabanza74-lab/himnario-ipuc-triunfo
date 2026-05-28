@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Alabaza_Ipuc_eltriunfo</string>
+    <string name="title_activity_main">Alabaza_Ipuc_eltriunfo</string>
+    <string name="package_name">com.ipuc.himnariotriunfo</string>
+    <string name="custom_url_scheme">com.ipuc.himnariotriunfo</string>
+</resources>
