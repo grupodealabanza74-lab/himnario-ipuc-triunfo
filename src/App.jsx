@@ -45,6 +45,9 @@ function App() {
   const [canciones, setCanciones] = useState([])
   const [miembros, setMiembros] = useState([])
   const [agendas, setAgendas] = useState([]) 
+  const [listaActividades, setListaActividades] = useState([]); 
+  const [nuevaActividad, setNuevaActividad] = useState({ video_url: '', actividad: '' });
+  const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
   const [cargando, setCargando] = useState(false)
   const [busqueda, setBusqueda] = useState('');
 
@@ -98,22 +101,42 @@ function App() {
     </svg>
   )
 
-  const cargarDatos = async () => {
-    setCargando(true)
-    try {
-      const resCanciones = await supabase.from('canciones').select('*')
-      const resMiembros = await supabase.from('Miembros').select('*')
-      const resAgendas = await supabase.from('programacion').select('*')
-      
-      if (resCanciones.data) setCanciones(resCanciones.data)
-      if (resMiembros.data) setMiembros(resMiembros.data)
-      if (resAgendas.data) setAgendas(resAgendas.data)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setCargando(false)
-    }
+  // ... (dentro de la función App())
+
+  // --- BUSCA ESTA FUNCIÓN Y REEMPLÁZALA POR LA NUEVA ---
+ const cargarDatos = async () => {
+  setCargando(true)
+  try {
+    const resCanciones = await supabase.from('canciones').select('*')
+    const resMiembros = await supabase.from('Miembros').select('*')
+    const resAgendas = await supabase.from('programacion').select('*')
+    const { data: estData } = await supabase.from('estudio').select('*').order('id', { ascending: false });
+    
+    if (resCanciones.data) setCanciones(resCanciones.data)
+    if (resMiembros.data) setMiembros(resMiembros.data)
+    if (resAgendas.data) setAgendas(resAgendas.data)
+    setListaActividades(estData || []); // Si es null, pone un array vacío
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setCargando(false)
   }
+}
+
+  // --- PEGA ESTA NUEVA FUNCIÓN JUNTO A TUS OTRAS FUNCIONES ---
+  const guardarActividad = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.from('estudio').insert([nuevaActividad]);
+    if (error) {
+      alert("Error: " + error.message);
+    } else {
+      alert("¡Actividad guardada!");
+      setNuevaActividad({ video_url: '', actividad: '' }); 
+      cargarDatos();
+    }
+  };
+
+  // ... (tus otras funciones como guardarCancion, eliminarCancion, etc.)
 
   useEffect(() => {
     cargarDatos()
@@ -232,7 +255,7 @@ function App() {
             />
             <div>
               {/* Título en color blanco impecable y sin subtítulo de administración debajo */}
-              <h1 className="font-black text-xl text-white tracking-tight leading-none">Cancionero.IPUC El Triunfo</h1>
+              <h1 className="font-black text-xl text-white tracking-tight leading-none">Himnario-Ipuc el Triunfo</h1>
             </div>
           </div>
 
@@ -273,41 +296,62 @@ function App() {
             </section>
 
             {/* OMNI-BUSCADOR POTENTE */}
-            <section className="space-y-3">
-              <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="🔍 Buscar por título, coro, letra, tono o autor..." 
-                  value={busquedaGlobal}
-                  onChange={(e) => setBusquedaGlobal(e.target.value)}
-                  className="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                />
-              </div>
+<section className="space-y-3">
+  <div className="relative">
+    <input 
+      type="text" 
+      placeholder="🔍 BUSCAR: Título, Autor, Tono o Letra..." 
+      value={busquedaGlobal}
+      onChange={(e) => setBusquedaGlobal(e.target.value)}
+      className="w-full p-4 bg-white border-2 border-blue-500 rounded-2xl text-sm font-bold text-blue-900 placeholder:text-blue-400 placeholder:font-black shadow-md focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all" 
+    />
+  </div>
 
-              {/* TABS CATEGORÍAS */}
-              <div className="flex gap-2 bg-slate-200/60 p-1 rounded-xl text-xs font-bold">
-                {['Alabanza', 'Adoración', 'Niños'].map(cat => (
-                  <button key={cat} onClick={() => setCategoriaActiva(cat)} className={`flex-1 py-2 rounded-lg text-center ${categoriaActiva === cat ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>{cat}</button>
-                ))}
-              </div>
 
-              {/* REPERTORIO ALFABÉTICO */}
-              <div className="space-y-2">
-                <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider px-1">Cantos Disponibles ({categoriaActiva} - De la A a la Z)</p>
-                {cancionesFiltradasYOrdenadas.length === 0 ? (
-                  <p className="text-center text-xs text-slate-400 py-4">No se encontraron cantos en esta sección.</p>
-                ) : (
-                  cancionesFiltradasYOrdenadas.map(canto => (
-                    <div key={canto.id} onClick={() => setCantoSeleccionado(canto)} className="p-4 bg-white border border-slate-200 rounded-xl flex justify-between items-center shadow-sm cursor-pointer hover:border-blue-300 transition-all">
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-sm">{canto.titulo}</h4>
-                        <p className="text-xs text-slate-400">Por: {canto.autor}</p>
-                      </div>
-                      {canto.tono && <span className="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg font-mono font-black">{canto.tono}</span>}
-                    </div>
-                  ))
-                )}
-              </div>
+              {/* TABS CATEGORÍAS - ESTILO INTEGRADO CON DEGRADADO AZUL */}
+<div className="flex gap-2 bg-slate-900 p-1.5 rounded-2xl text-sm font-bold shadow-inner border border-slate-700/50">
+  {['Alabanza', 'Adoración', 'Niños'].map(cat => (
+    <button 
+      key={cat} 
+      onClick={() => setCategoriaActiva(cat)} 
+      className={`flex-1 py-3 rounded-xl text-center transition-all duration-300 ${
+        categoriaActiva === cat 
+          ? 'bg-gradient-to-br from-indigo-900 to-slate-900 text-white shadow-lg border border-slate-700' 
+          : 'text-slate-400 hover:text-white'
+      }`}
+    >
+      {cat}
+    </button>
+  ))}
+</div>
+
+{/* REPERTORIO ALFABÉTICO CON ESTILO OSCURO */}
+<div className="space-y-2">
+  <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider px-1">
+    Cantos Disponibles ({categoriaActiva} - De la A a la Z)
+  </p>
+  {cancionesFiltradasYOrdenadas.length === 0 ? (
+    <p className="text-center text-xs text-slate-400 py-4">No se encontraron cantos en esta sección.</p>
+  ) : (
+    cancionesFiltradasYOrdenadas.map(canto => (
+      <div 
+        key={canto.id} 
+        onClick={() => setCantoSeleccionado(canto)} 
+        className="p-4 bg-gradient-to-br from-indigo-900 to-slate-900 border border-slate-700/50 rounded-2xl flex justify-between items-center shadow-lg cursor-pointer hover:from-indigo-800 hover:to-slate-800 transition-all"
+      >
+        <div>
+          <h4 className="font-bold text-white text-sm">{canto.titulo}</h4>
+          <p className="text-xs text-indigo-200">Por: {canto.autor}</p>
+        </div>
+        {canto.tono && (
+          <span className="text-[10px] bg-blue-600/80 text-white px-3 py-1 rounded-xl font-mono font-bold shadow-sm backdrop-blur-sm">
+            {canto.tono}
+          </span>
+        )}
+      </div>
+    ))
+  )}
+</div>
             </section>
 
             {/* REPERTORIO DIARIO INDEPENDIENTE POR TONO */}
@@ -391,8 +435,54 @@ function App() {
               <h4 className="text-sm font-bold text-white">{ejercicioDelDia?.titulo}</h4>
               <p className="text-xs text-slate-300 leading-relaxed">{ejercicioDelDia?.desc}</p>
             </section>
+
+
+
+        {/* ZONA DE ESTUDIO (En la parte pública) */}
+<section className="bg-gradient-to-br from-indigo-950 to-slate-950 text-white rounded-3xl p-6 shadow-xl border border-indigo-500/20 space-y-5">
+    <div className="flex items-center gap-3">
+      <span className="text-2xl">🎓</span>
+      <h3 className="text-lg font-black uppercase tracking-widest text-indigo-300">Zona de Estudio</h3>
+    </div>
+
+    {listaActividades.length > 0 ? (
+      <>
+        <div className="w-full aspect-video rounded-2xl overflow-hidden border-2 border-indigo-500/30 shadow-lg">
+          <iframe 
+            className="w-full h-full"
+            src={`https://www.youtube.com/embed/${listaActividades[0].video_url?.split('v=')[1]?.split('&')[0] || ''}`} 
+            title="Video de Estudio" 
+            allowFullScreen
+          ></iframe>
+        </div>
+        <div className="space-y-2">
+          <h4 className="font-bold text-blue-200">Actividad de hoy:</h4>
+          <p className="text-sm text-slate-300 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5">
+            {listaActividades[0].actividad}
+          </p>
+        </div>
+      </>
+    ) : (
+      <p className="text-center text-slate-400">No hay actividades de estudio registradas.</p>
+    )}
+    
+    {/* ... dentro de tu sección pública de Zona de Estudio ... */}
+<a 
+  href="https://drive.google.com/drive/folders/1T7pQitAVS10rrNG-GakG-9ILUjcdbLtR?usp=sharing" 
+  target="_blank" 
+  rel="noopener noreferrer"
+  className="block w-full py-4 bg-blue-600 text-center font-black uppercase rounded-2xl text-white shadow-lg transition-transform hover:scale-[1.02]"
+>
+  📂 Ver Actividades Anteriores
+</a>
+  </section>
           </>
+
+        
+
         )}
+
+
 
         {/* --- PANELS ADMINISTRADOR REAL --- */}
         {isAdmin && (
@@ -401,6 +491,7 @@ function App() {
               <button onClick={() => setSubSeccion('canciones')} className={`flex-1 py-2 rounded-lg text-center ${subSeccion === 'canciones' ? 'bg-white text-blue-700 shadow-sm' : 'text-white/70'}`}>🎵 Cantos</button>
               <button onClick={() => setSubSeccion('programacion')} className={`flex-1 py-2 rounded-lg text-center ${subSeccion === 'programacion' ? 'bg-white text-blue-700 shadow-sm' : 'text-white/70'}`}>📅 Agenda</button>
               <button onClick={() => setSubSeccion('miembros')} className={`flex-1 py-2 rounded-lg text-center ${subSeccion === 'miembros' ? 'bg-white text-blue-700 shadow-sm' : 'text-white/70'}`}>👥 Miembros</button>
+              <button onClick={() => setSubSeccion('estudio')} className={`flex-1 py-2 rounded-lg ${subSeccion === 'estudio' ? 'bg-white text-blue-700' : 'text-white/70'}`}>🎓 Estudio</button>
             </div>
 
             {subSeccion === 'canciones' && (
@@ -623,6 +714,89 @@ function App() {
     </div>
   </div>
 )}
+{subSeccion === 'estudio' && (
+  <div className="space-y-6">
+    {/* Botón para abrir formulario */}
+    <button 
+      onClick={() => setMostrandoFormulario(!mostrandoFormulario)}
+      className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg"
+    >
+      {mostrandoFormulario ? "Cancelar" : "+ Nueva Actividad"}
+    </button>
+
+    {/* Formulario (Solo visible si mostrandoFormulario es true) */}
+    {mostrandoFormulario && (
+      <div className="bg-white p-6 rounded-2xl shadow-xl border border-indigo-100 space-y-4 animate-in fade-in zoom-in duration-200">
+        <h3 className="font-bold text-slate-800 text-sm">Registrar en Base de Datos</h3>
+        <input 
+          placeholder="Link de YouTube" 
+          className="w-full p-3 border rounded-xl text-sm bg-slate-50"
+          value={nuevaActividad.video_url}
+          onChange={e => setNuevaActividad({...nuevaActividad, video_url: e.target.value})}
+        />
+        <textarea 
+          placeholder="Descripción de la actividad" 
+          className="w-full p-3 border rounded-xl text-sm bg-slate-50"
+          rows="3"
+          value={nuevaActividad.actividad}
+          onChange={e => setNuevaActividad({...nuevaActividad, actividad: e.target.value})}
+        />
+        <button 
+          onClick={async () => {
+            const { error } = await supabase.from('estudio').insert([{ 
+              video_url: nuevaActividad.video_url, 
+              actividad: nuevaActividad.actividad 
+            }]);
+            
+            if (error) {
+              alert("Error: " + error.message);
+            } else {
+              setNuevaActividad({ video_url: '', actividad: '' });
+              setMostrandoFormulario(false); // Cierra el formulario
+              cargarDatos(); // Recarga la lista
+            }
+          }}
+          className="w-full py-3 bg-green-600 text-white font-bold rounded-xl text-sm"
+        >
+          Guardar Actividad
+        </button>
+      </div>
+    )}
+
+    {/* Lista de actividades */}
+    {/* LISTA DE ACTIVIDADES */}
+<div className="space-y-3">
+  <h3 className="font-bold text-slate-500 uppercase text-[10px] tracking-wider px-1">Actividades Registradas</h3>
+  {Array.isArray(listaActividades) && listaActividades.map(item => (
+    <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
+      <div className="overflow-hidden">
+        <p className="text-sm font-bold text-slate-800 truncate">{item.actividad}</p>
+        <p className="text-[10px] text-blue-600 truncate">{item.video_url}</p>
+      </div>
+      
+      {/* BOTÓN BORRAR */}
+      <button 
+        onClick={async () => {
+          if(confirm('¿Seguro que deseas eliminar esta actividad?')) {
+            const { error } = await supabase.from('estudio').delete().eq('id', item.id);
+            if (!error) {
+              cargarDatos(); // Esto refresca la lista automáticamente
+            } else {
+              alert("Error al eliminar: " + error.message);
+            }
+          }
+        }}
+        className="ml-4 p-2 bg-red-50 text-red-600 text-[10px] font-bold rounded-lg hover:bg-red-100 transition-colors"
+      >
+        Borrar
+      </button>
+    </div>
+  ))}
+</div>
+  </div>
+)}
+
+ 
           </div>
         )}
       </div>
@@ -790,8 +964,17 @@ function App() {
           </div>
         </div>
       )}
-
+     {/* --- FOOTER DE COPYRIGHT --- */}
+      <footer className="mt-12 mb-6 text-center border-t border-slate-200 pt-6">
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+          © Grupo de Alabanza IPUC El Triunfo 2026
+        </p>
+        <p className="text-[9px] text-slate-400">
+          Sistemas de Gestión Musical
+        </p>
+      </footer>
     </div>
+    
   )
 }
 
