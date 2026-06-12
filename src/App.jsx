@@ -23,6 +23,13 @@ const EJERCICIOS_VOCAL = [
   { titulo: "Relajación y Brillo (Lip Trill)", desc: "Haz vibrar tus labios imitando el motor de un carro flojo (Prrr). Mantén el flujo de aire constante. Hazlo durante 15 segundos para masajear tus cuerdas vocales antes de comenzar a cantar." }
 ]
 
+const obtenerIdYouTube = (url) => {
+  if (!url) return '';
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
 function App() {
   // --- CONTROL DE NAVEGACIÓN Y ROLES ---
   const [isAdmin, setIsAdmin] = useState(false) 
@@ -439,43 +446,45 @@ function App() {
 
 
         {/* ZONA DE ESTUDIO (En la parte pública) */}
+{/* ZONA DE ESTUDIO */}
 <section className="bg-gradient-to-br from-indigo-950 to-slate-950 text-white rounded-3xl p-6 shadow-xl border border-indigo-500/20 space-y-5">
-    <div className="flex items-center gap-3">
-      <span className="text-2xl">🎓</span>
-      <h3 className="text-lg font-black uppercase tracking-widest text-indigo-300">Zona de Estudio</h3>
-    </div>
+  <div className="flex items-center gap-3">
+    <span className="text-2xl">🎓</span>
+    <h3 className="text-lg font-black uppercase tracking-widest text-indigo-300">Zona de Estudio</h3>
+  </div>
 
-    {listaActividades.length > 0 ? (
-      <>
-        <div className="w-full aspect-video rounded-2xl overflow-hidden border-2 border-indigo-500/30 shadow-lg">
-          <iframe 
-            className="w-full h-full"
-            src={`https://www.youtube.com/embed/${listaActividades[0].video_url?.split('v=')[1]?.split('&')[0] || ''}`} 
-            title="Video de Estudio" 
-            allowFullScreen
-          ></iframe>
-        </div>
-        <div className="space-y-2">
-          <h4 className="font-bold text-blue-200">Actividad de hoy:</h4>
-          <p className="text-sm text-slate-300 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5">
-            {listaActividades[0].actividad}
-          </p>
-        </div>
-      </>
-    ) : (
-      <p className="text-center text-slate-400">No hay actividades de estudio registradas.</p>
-    )}
-    
-    {/* ... dentro de tu sección pública de Zona de Estudio ... */}
-<a 
-  href="https://drive.google.com/drive/folders/1T7pQitAVS10rrNG-GakG-9ILUjcdbLtR?usp=sharing" 
-  target="_blank" 
-  rel="noopener noreferrer"
-  className="block w-full py-4 bg-blue-600 text-center font-black uppercase rounded-2xl text-white shadow-lg transition-transform hover:scale-[1.02]"
->
-  📂 Ver Actividades Anteriores
-</a>
-  </section>
+  {listaActividades.length > 0 ? (
+    <>
+      <div className="w-full aspect-video rounded-2xl overflow-hidden border-2 border-indigo-500/30 shadow-lg">
+        <iframe 
+          className="w-full h-full"
+          // AQUÍ USAS LA FUNCIÓN QUE DEFINISTE ARRIBA:
+          src={`https://www.youtube.com/embed/${obtenerIdYouTube(listaActividades[0]?.video_url)}`} 
+          title="Video de Estudio" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        ></iframe>
+      </div>
+      <div className="space-y-2">
+        <h4 className="font-bold text-blue-200">Actividad de hoy:</h4>
+        <p className="text-sm text-slate-300 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5">
+          {listaActividades[0].actividad}
+        </p>
+      </div>
+    </>
+  ) : (
+    <p className="text-center text-slate-400">No hay actividades de estudio registradas.</p>
+  )}
+  
+  <a 
+    href="https://drive.google.com/drive/folders/1T7pQitAVS10rrNG-GakG-9ILUjcdbLtR?usp=sharing" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="block w-full py-4 bg-blue-600 text-center font-black uppercase rounded-2xl text-white shadow-lg transition-transform hover:scale-[1.02]"
+  >
+    📂 Ver Actividades Anteriores
+  </a>
+</section>
           </>
 
         
